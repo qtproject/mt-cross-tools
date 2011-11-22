@@ -1,0 +1,64 @@
+#!/bin/bash
+####
+# Copyright (c) 2011 Nokia Corporation
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without
+# limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+####
+
+BASENAME=$(basename $0)
+ARCH=${BASENAME##*-}
+filetype="package"
+usage="$(basename $0) [-a ARCH] [-n] SPEC_FILE+"
+
+NON_INTERACTIVE=""
+QUIET=""
+while getopts "a:hqn" opt ; do
+    case $opt in
+	a)  ARCH="$OPTARG";;
+	h)  echo $usage; exit 0;;
+	n)  NON_INTERACTIVE="--non-interactive";;
+	q)  QUIET="--quiet";;
+	\?) echo "Bad option"; exit 1;;
+    esac
+done
+shift $(($OPTIND-1))
+
+VARCACHE="/var/cache/zypp/packages"
+ZYPP_CONF="/etc/zypp/zypp.conf"
+ZYPPER="zypper"
+
+if [ "$ARCH" != "build-dep" ] ; then
+    SYSROOT=/usr/${ARCH}-redhat-linux-gnueabi/sys-root    
+    ZYPP_CONF="${SYSROOT}${ZYPP_CONF}"
+    VARCACHE="${SYSROOT}${VARCACHE}"
+    ZYPPER="ZYPP_CONF=${ZYPP_CONF} zypper -R ${SYSROOT}"
+fi
+
+
+for i in "$*" ; do
+    echo "i=$i  arch= ${ARCH}"
+    INSTALL_LIST=""
+    for j in `rpmbuild-${ARCH} -bp $i 2>&1 | egrep "is needed by" | cut -f1 -d ' '` ; do
+	INSTALL_LIST=$INSTALL_LIST" $j"
+    done
+    if [ "$INSTALL_LIST" != "" ]; then
+	zypper-${ARCH}  $NON_INTERACTIVE $QUIET  install  --no-recommends $INSTALL_LIST;
+    fi
+done
