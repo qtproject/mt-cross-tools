@@ -1,0 +1,21 @@
+[nrcc-platform]
+name=NRCC PLATFORM ARM RPM Repository for Fedora 
+# enable if you want to pull a platform rpm into your sysroot
+# generally a bad idea.
+enabled=0
+autorefresh=0
+baseurl=http://mt-fedora.nrcc.noklab.com/repos/f14-platform/armv5tel
+type=rpm-md
+gpgcheck=0
+keeppackages=0
+
+[nrcc-srpm-platform]
+name=NRCC PLATFORM ARM SRPM Repository for Fedora 
+# enable this if we want to work on the SRPMS for 
+# the platform
+enabled=0
+autorefresh=0
+baseurl=http://mt-fedora.nrcc.noklab.com/repos/f14-platform/SRPMS
+type=rpm-md
+gpgcheck=0
+keeppackages=0

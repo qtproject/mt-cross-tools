@@ -1,0 +1,236 @@
+# Custom RPM macros configuration file for building RPM packages
+# as a non-root user.
+#
+# Author:  Mike A. Harris 
+# Modified by: George France && Col. Pickering
+#
+# This is a copy of my own personal RPM configuration which I use
+# on my workstation for building and testing packages for Red Hat Linux.
+# There are many different possibilities on how to configure RPM, so
+# feel free to tweak however you desire.  Make sure to create any
+# directories that are referenced prior to using.  RPM will automatically
+# create some of them if missing, but not all of them.  Which ones it
+# auto-creates is only known by the extraterrestrial aliens that have
+# created RPM.
+#
+# For ANY help with anything related to RPM development, packaging,
+# or customization, please join the Red Hat RPM mailing list by sending
+# an email message to:  rpm-list-request@redhat.com  with the word
+# "subscribe" in the Subject: line.
+#
+# Any suggestions/comments/ for improvements to this setup appreciated.
+
+
+# %_tmppath is where temporary scripts are placed during the RPM build
+# process as well as the %_buildroot where %install normally dumps files
+# prior to packaging up the final binary RPM's.
+%_tmppath  %{_topdir}/tmp
+
+# %_builddir is where source code tarballs are decompressed, and patches then
+# applied when building an RPM package
+%_builddir     %{_topdir}/BUILD
+
+# %_buildroot is where files get placed during the %install section of spec
+# file processing prior to final packaging into rpms.  This is oddly named
+# and probably should have been called "%_installroot" back when it was
+# initially added to RPM.  Alas, it was not.  ;o)
+#%_buildroot %{_topdir}/BUILDROOT/%{name}-%{version}-root
+%_buildroot %{_topdir}/INSTALLROOT
+
+# %_rpmdir is where binary RPM packages are put after being built.
+%_rpmdir   %{_topdir}/RPMS
+
+# %_srcrpmdir is where src.rpm packages are put after being built.
+%_srcrpmdir   %{_topdir}/SRPMS
+
+# %_rpmfilename defines the naming convention of the produced RPM packages,
+# and should not be modified.  It is listed here because I am overriding
+# RPM's default behaviour of dropping binary RPM's each in their own
+# separate subdirectories.  I hate that.  Grrr.
+%_rpmfilename		    %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm
+
+# Customized tags for local builds
+# %packager is the info that will appear in the "Packager:" field in the
+# RPM header on built packages.  By default I have it read your username
+# and hostname.  This should be customized appropriately.
+# %packager	 Joe Blow 
+# %vendor	 Which
+# %distribution	 Why
+
+# GNU GPG config below
+#%_signature     gpg
+#%_gpg_name      Joe Blow 
+#%_gpg_path      %(echo $HOME)/.gnupg
+
+
+#### stolen from mock-cross
+%optflags               -O2 -g -march=armv5te -Wl,-Bsymbolic-functions -Wl,--build-id  
+
+
+
+### random web suggestion
+%_host armv5tel-redhat-linux-gnueabi
+%_build i686-pc-linux-gnu
+
+
+%_initddir %{_sysconfdir}/rc.d/init.d
+
+
+####
+
+######### more puled from mock-cross
+#==============================================================================
+# Update config.sub files found in build sources.
+#
+%_update_config \
+  for i in $(find . -name config.guess -o -name config.sub) ; do \
+           [ -f /etc/mock-cross/$(basename $i) ] && %{__rm} -f $i && %{__cp} -fv /etc/mock-cross/$(basename $i) $i ; \
+  done
+
+
+#==============================================================================
+# Override cmake with one which sets up a crossbuild.
+%cmake \
+  CFLAGS="${CFLAGS:-%optflags}" ; export CFLAGS ; \
+  CXXFLAGS="${CXXFLAGS:-%optflags}" ; export CXXFLAGS ; \
+  FFLAGS="${FFLAGS:-%optflags}" ; export FFLAGS ; \
+  PKG_CONFIG_PATH=%{_sysroot}/usr/lib/pkgconfig \
+  %__cmake \\\
+        -DCMAKE_VERBOSE_MAKEFILE=ON \\\
+        -DCMAKE_INSTALL_PREFIX:PATH=%{_prefix} \\\
+        -DCMAKE_INSTALL_LIBDIR:PATH=%{_libdir} \\\
+        -DINCLUDE_INSTALL_DIR:PATH=%{_includedir} \\\
+        -DLIB_INSTALL_DIR:PATH=%{_libdir} \\\
+        -DSYSCONF_INSTALL_DIR:PATH=%{_sysconfdir} \\\
+        -DSHARE_INSTALL_PREFIX:PATH=%{_datadir} \\\
+        -DCMAKE_TOOLCHAIN_FILE="~/.rpm/${ARCH}-gnueabi/Toolchain-cross.cmake" \\\
+        -DBUILD_SHARED_LIBS:BOOL=ON
+
+
+
+#==============================================================================
+# Override configure with one which sets up a crossbuild.
+#
+%_sysroot $SYSROOT
+
+
+%configure \
+  [ -f /etc/mock-cross/ac_defines ] && . /etc/mock-cross/ac_defines ; \
+  [ -f /etc/mock-cross/arch/ac_defines.%{_arch} ] && . /etc/mock-cross/arch/ac_defines.%{_arch} ; \
+  export PKG_CONFIG_LIBDIR=%{_sysroot}%{_libdir}/pkgconfig:%{_sysroot}%{_datadir}/pkgconfig; \
+  SYSROOT="%{_sysroot}"; export SYSROOT; \
+  AR="${AR:-%{__ar}}"; export AR; \
+  AS="${AS:-%{__as}}"; export AS; \
+  CC="${CC:-%{__cc}}"; export CC; \
+  BUILD_CC=gcc; export BUILD_CC; \
+  CC_FOR_BUILD=gcc; export CC_FOR_BUILD; \
+  CFLAGS_FOR_BUILD="${CFLAGS_FOR_BUILD:-%optflags_for_build}" ; export CFLAGS_FOR_BUILD ; \
+  LDFLAGS_FOR_BUILD="${LDFLAGS_FOR_BUILD:-%optflags_for_build}" ; export LDFLAGS_FOR_BUILD ; \
+  CXXFLAGS_FOR_BUILD="${CXXFLAGS_FOR_BUILD:-%optflags_for_build}" ; export CXXFLAGS_BUILD ; \
+  CXX="${CXX:-%{__cxx}}"; export CXX; \
+  LD="${LD:-%{__ld}}"; export LD; \
+  NM="${NM:-%{__nm}}"; export NM; \
+  OBJCOPY="${OBJCOPY:-%{__objcopy}}"; export OBJCOPY; \
+  OBJDUMP="${OBJDUMP:-%{__objdump}}"; export OBJDUMP; \
+  RANLIB="${RANLIB:-%{__ranlib}}"; export RANLIB; \
+  STRIP="${STRIP:-%{__strip}}"; export STRIP; \
+  CFLAGS="${CFLAGS:-%optflags}" ; export CFLAGS ; \
+  CXXFLAGS="${CXXFLAGS:-%optflags}" ; export CXXFLAGS ; \
+  FFLAGS="${FFLAGS:-%optflags}" ; export FFLAGS ; \
+  %_update_config ; \
+  ./configure --target=%{_target_platform} \\\
+	--host=%{_target_platform} \\\
+	--build=%{_build_platform}  \\\
+	--program-prefix=%{?_program_prefix} \\\
+ 	--prefix=%{_prefix} \\\
+	--exec-prefix=%{_exec_prefix} \\\
+	--bindir=%{_bindir} \\\
+	--sbindir=%{_sbindir} \\\
+	--sysconfdir=%{_sysconfdir} \\\
+	--datadir=%{_datadir} \\\
+	--includedir=%{_includedir} \\\
+	--libdir=%{_libdir} \\\
+	--libexecdir=%{_libexecdir} \\\
+	--localstatedir=%{_localstatedir} \\\
+	--sharedstatedir=%{_sharedstatedir} \\\
+	--mandir=%{_mandir} \\\
+	--infodir=%{_infodir}
+
+
+#==============================================================================
+# Add configure_for_build to configure/build binaries for the build host.
+#
+%configure_for_build \
+  CFLAGS="${CFLAGS_FOR_BUILD:-%optflags_for_build}" ; export CFLAGS ; \
+  CXXFLAGS="${CXXFLAGS_FOR_BUILD:-%optflags_for_build}" ; export CXXFLAGS ; \
+  FFLAGS="${FFLAGS:-%optflags_for_build -I%_fmoddir}" ; export FFLAGS ; \
+  ./configure \\\
+	--target=%{_build_platform} \\\
+	--build=%{_build_platform} \\\
+	--host=%{_build_platform} \\\
+	--program-prefix=%{?_program_prefix} \\\
+	--prefix=%{_prefix} \\\
+	--exec-prefix=%{_exec_prefix} \\\
+	--bindir=%{_bindir} \\\
+	--sbindir=%{_sbindir} \\\
+	--sysconfdir=%{_sysconfdir} \\\
+	--datadir=%{_datadir} \\\
+	--includedir=%{_includedir} \\\
+	--libdir=%{_libdir} \\\
+	--libexecdir=%{_libexecdir} \\\
+	--localstatedir=%{_localstatedir} \\\
+	--sharedstatedir=%{_sharedstatedir} \\\
+	--mandir=%{_mandir} \\\
+	--infodir=%{_infodir}
+
+
+%_build_platform	i686-pc-linux-gnu
+%_target_platform	arm-linux-gnueabi 
+%_host_platform	 	arm-linux-gnueabi 
+
+
+# define something so we know if we are cross even for noarch builds
+%_crossbuild 1
+
+
+#==============================================================================
+# Make specfile %check a no-op when cross-building
+#
+
+%__spec_check_cmd	/bin/true
+#%__check_files /bin/true
+
+# bavery different from  mock
+%_tool_triplet arm-none-linux-gnueabi
+#==============================================================================
+# Add in tool prefix
+#
+%__ar			%{_tool_triplet}-ar
+%__as			%{_tool_triplet}-as
+%__cc			%{_tool_triplet}-gcc
+%__cpp			%{_tool_triplet}-cpp
+%__cxx			%{_tool_triplet}-g++
+%__ld			%{_tool_triplet}-ld
+%__nm			%{_tool_triplet}-nm
+%__objcopy		%{_tool_triplet}-objcopy
+%__objdump		%{_tool_triplet}-objdump
+%__ranlib		%{_tool_triplet}-ranlib
+%__strip		%{_tool_triplet}-strip
+
+
+#==============================================================================
+
+
+
+
+#=========================================
+# sometimes we leave things hanging around....
+%_unpackaged_files_terminate_build	0
+
+
+# pkg_config helps now that we have the fixer script.
+PKG_CONFIG_PATH="%{_sysroot}/usr/lib/pkgconfig"
+export PKG_CONFIG_PATH
+
+
+%_IN_PLATFORM_MACRO 1

@@ -1,0 +1,8 @@
+[f13-arm]
+name=ARM RPM Repository for Fedora13
+enabled=1
+autorefresh=0
+baseurl=http://mt-fedora.nrcc.noklab.com/fedora-secondary/releases/13/Everything/arm/os
+type=rpm-md
+gpgcheck=0
+keeppackages=0

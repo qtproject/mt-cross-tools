@@ -1,0 +1,19 @@
+[nrcc-sysroot]
+name=NRCC SYSROOT ARM RPM Repository for Fedora 
+# enable this if we need to add something in here
+enabled=1
+autorefresh=0
+baseurl=http://mt-fedora.nrcc.noklab.com/repos/f14-sysroot/armv5tel
+type=rpm-md
+gpgcheck=0
+keeppackages=0
+
+[nrcc-srpm-sysroot]
+name=NRCC SYSROOT ARM SRPM Repository for Fedora 
+# enable this if we need to add something in here
+enabled=1
+autorefresh=0
+baseurl=http://mt-fedora.nrcc.noklab.com/repos/f14-sysroot/SRPMS
+type=rpm-md
+gpgcheck=0
+keeppackages=0

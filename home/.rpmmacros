@@ -1,0 +1,16 @@
+# By default, ROOT of the buildsystem
+%_topdir	 %(echo $HOME)/rpmbuild%(echo $PP_ARCH)
+%_sourcedir     %{_topdir}/SOURCES/%{name}-%{version}
+%_specdir       %{_sourcedir}
+
+# to help with check-buildroot, uncomment if needed
+# currently needed to build the cross gcc.  probably should
+# debug this at some point.
+#%_unpackaged_files_terminate_build      0
+#%__arch_install_post   /usr/lib/rpm/check-rpaths   /usr/lib/rpm/check-buildroot
+
+
+# uncomment/fix these for the rpmbumpspec/rpmdevtools to work
+#%packager        Colonel Pickering 
+#%vendor          MyFairLady
+#%distribution    TheDance

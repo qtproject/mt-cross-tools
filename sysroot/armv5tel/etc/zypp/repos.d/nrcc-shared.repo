@@ -1,0 +1,19 @@
+[nrcc-shared]
+name=NRCC SHARED ARM RPM Repository for Fedora 
+# enable this if we need to add something in here
+enabled=1
+autorefresh=0
+baseurl=http://mt-fedora.nrcc.noklab.com/repos/f14-shared/armv5tel
+type=rpm-md
+gpgcheck=0
+keeppackages=0
+
+[nrcc-srpm-shared]
+name=NRCC SHARED ARM SRPM Repository for Fedora 
+# enable this if we need to add something in here
+enabled=1
+autorefresh=0
+baseurl=http://mt-fedora.nrcc.noklab.com/repos/f14-shared/SRPMS
+type=rpm-md
+gpgcheck=0
+keeppackages=0
