@@ -91,7 +91,7 @@ fi
 
 ## add in the private repo certificate so zypper will play nice with it.
 ## this goes in the host machine certs, not the sysroots
-curl http://mt-fedora/mt-fedora.nrcc.noklab.com.ssl.crt | sudo tee -a /etc/pki/tls/certs/ca-bundle.crt
+curl http://${RPM_SERVER}/mt-fedora.nrcc.noklab.com.ssl.crt | sudo tee -a /etc/pki/tls/certs/ca-bundle.crt
 
 
 SPHONE_DIR=$1
@@ -182,10 +182,10 @@ for base_name in armv5tel-redhat armv7hl-redhat; do
 done
 NUM_CPUS=`grep processor  /proc/cpuinfo  | tail -1  | cut -f2 -d ':'`
 
-if [ "$NUM_CPUS" == "0" ]; then
-echo "# %_smp_mflags -j${NUM_CPUS}" >> ~/.rpmmacros
+if [ "$NUM_CPUS" -eq "0" ]; then
+echo "%_smp_mflags -j 1" >> ~/.rpmmacros
 else
-echo "%_smp_mflags -j${NUM_CPUS}" >> ~/.rpmmacros
+echo "%_smp_mflags -j ${NUM_CPUS}" >> ~/.rpmmacros
 fi
 
 
