@@ -44,7 +44,8 @@ YUMLIST_NRCC="zypper \
 cross-rpm-config \
 redhat-rpm-config \
 armv5tel-redhat-linux-gnueabi-binutils \
-armv5tel-redhat-linux-gnueabi-gcc-linaro.4.5.2011.09 \
+armv5tel-redhat-linux-gnueabi-gcc \
+yum-utils \
 xmlto \
 docbook2ps \
 rpmdevtools \
@@ -69,6 +70,7 @@ RPMLIST_NRCC="redhat-rpm-config-9.1.0-5.fc14.nrcc.2 \
 rpm-build-4.8.1-5.fc14.nrcc.9 \
 rpm-4.8.1-5.fc14.nrcc.9 \
 rpm-apidocs-4.8.1-5.fc14.nrcc.9 \
+rpm-devel-4.8.1-5.fc14.nrcc.9 \
 rpm-python-4.8.1-5.fc14.nrcc.9 \
 rpm-cron-4.8.1-5.fc14.nrcc.9 \
 rpm-libs-4.8.1-5.fc14.nrcc.9 "
@@ -147,29 +149,21 @@ for i in $RPMLIST_NRCC; do
     #   the doofy plugin *sometimes* reverts the permissions to 600 instead of 644
     sudo chmod 644 $VERSIONLOCK_FILE
     # using yumdownloader meand we get i686 or x86_64 whichever is correct
+    echo "grabbing $i using yumdownloader"
     yumdownloader --disablerepo=* --enablerepo=f14-cross $BASE_NAME
     echo "$i*rpm" >> $RPM_MANIFEST
+    echo "rpm manifest now looks like: " `cat $RPM_MANIFEST`
     sudo yum versionlock  $i
 done
 
 # the doofy plugin *sometimes* reverts the permissions to 600 instead of 644
 sudo chmod 644 $VERSIONLOCK_FILE
+echo "Forcing Manifest rpms in"
 sudo rpm -Uv --force $RPM_MANIFEST  
 rm -f $RPM_MANIFEST
 rm -rf /tmp/*rpm
 
-echo "Making ARM links"
-cd ~/bin
-for base_name in armv5tel-redhat armv7hl-redhat; do
-    for newprefix in arm arm-none ; do
-	for i in /usr/bin/${base_name}*; do
-	    oldname=$(basename $i)
-	    linkname=${newprefix}${oldname#${base_name}}
-	    echo Redirecting to $i from ${linkname}
-	    ln -sf $i ${linkname}
-	done
-    done
-done
+
 NUM_CPUS=`grep processor  /proc/cpuinfo  | tail -1  | cut -f2 -d ':'`
 
 if [ "$NUM_CPUS" -eq "0" ]; then
