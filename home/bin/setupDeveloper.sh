@@ -63,6 +63,8 @@ tcl \
 asciidoc \
 sharutils \
 fdupes \
+popt-devel \
+file-devel \
 expat-devel"
 
 
