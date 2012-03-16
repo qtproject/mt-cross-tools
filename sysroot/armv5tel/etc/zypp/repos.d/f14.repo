@@ -1,8 +1,0 @@
-[f14-arm]
-name=ARM RPM Repository for Fedora14
-enabled=1
-autorefresh=0
-baseurl=http://mt-fedora.nrcc.noklab.com/repos/f14-mirror/armv5tel
-type=rpm-md
-gpgcheck=0
-keeppackages=0

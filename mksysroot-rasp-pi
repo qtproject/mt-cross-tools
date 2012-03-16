@@ -1,0 +1,86 @@
+#!/bin/sh
+
+ARCH=armv5tel
+SYSROOT=/opt/qtonpi/${ARCH}-qtonpi-linux-gnueabi/sys-root
+ZYPP_CONF_NAME=etc-zypp-armv5fedora14-upstream.tgz
+# set -x
+function usage {
+    echo "usage: sudo $0 RPM_LIST"
+    exit
+}
+
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root"
+   usage
+fi
+
+if [ $# -ne 1 ] ; then
+    usage
+fi
+
+if [ ! -s "$1" ]; then
+    echo "need a list of rpms to populate"
+    usage
+fi
+
+F_RPMLIST=$1
+
+function die {
+    echo $1
+    exit
+}
+
+# force absolute path, could use readlink -m but not on mac :(
+fsdir=$SYSROOT
+
+if [ -d $fsdir ]; then
+    echo "$fsdir already exists. I won't overwrite it"
+    echo "please move/delete your sys-root so can I create a new one"
+    exit
+fi
+
+mkdir -p $fsdir/etc/
+
+# set up our zypper
+# just package it here
+tar xvf $ZYPP_CONF_NAME -C $fsdir/etc
+export ZYPP_CONF=$fsdir/etc/zypp/zypp.conf
+
+echo "using the following repos:"
+ZYPP_CONF=$ZYPP_CONF zypper -R $fsdir lr
+echo "refreshing the repos, this will take awhile (~ 5min)"
+ZYPP_CONF=$ZYPP_CONF zypper -R $fsdir refresh
+
+mkdir -p $fsdir/var/lib
+mkdir -p $fsdir/var/log
+
+# install packages
+ZYPP_CONF=$ZYPP_CONF zypper -R $fsdir -n install upstart-sysvinit   || die "can't install what I can't find: upstart-sysvinit"
+for i in `cat $F_RPMLIST| sed '/^ *#/d;s/#.*//' `; do
+    echo "Working on $i"
+    echo "calling     ZYPP_CONF=$ZYPP_CONF zypper -R $fsdir -n install   $i "
+    ZYPP_CONF=$ZYPP_CONF zypper -R $fsdir -n install   $i || die "can't install what I can't find: $i"
+done
+
+# lastly force in the extra stuff
+# and the binary only gles libraries
+echo "unpacking the gles libs/headers"
+tar xf binaries/opt-vc-bcom-gles.tar.bz2 -C $fsdir || die "can't unpack the gles tarfile"
+# and qt5
+echo "unpacking qt5"
+if [ -d /opt/qt5 ]; then
+    echo "/opt/qt5 already exists. I won't overwrite it"
+    if [ "`file /opt/qt5/lib/libQtCore.so.5.0.0| egrep ARM`" != "" ]; then
+        echo "since /opt/qt5 appears to be an arm install, I will link the sysroot/opt/qt5 to your existing qt5"
+        cd $fsdir/opt
+        ln -s /opt/qt5 qt5
+    else
+        echo "/opt/qt5/lib/libQtCore.so.5.0.0 doesn't appear to be an ARM binary; giving up..."
+    fi
+    exit
+fi
+
+# no preexisting /opt/qt5, install ours
+sudo tar xvf ../../app-sdk/opt-qt5-current.tar.bz2  -C / || die "can't unpack the qt5 tarfile"
+cd $fsdir/opt
+ln -s /opt/qt5 qt5
