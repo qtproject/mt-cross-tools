@@ -43,7 +43,7 @@ mkdir -p $fsdir/etc/
 
 # set up our zypper
 # just package it here
-tar xvf $ZYPP_CONF_NAME -C $fsdir/etc
+tar xvf binaries/$ZYPP_CONF_NAME -C $fsdir/etc
 export ZYPP_CONF=$fsdir/etc/zypp/zypp.conf
 
 echo "using the following repos:"

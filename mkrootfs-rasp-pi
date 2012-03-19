@@ -47,7 +47,7 @@ fsdir=`cd $1; pwd`
 
 # set up our zypper
 # just package it here
-tar xf $ZYPP_CONF_NAME -C $fsdir/etc
+tar xf binaries/$ZYPP_CONF_NAME -C $fsdir/etc
 export ZYPP_CONF=$fsdir/etc/zypp/zypp.conf
 
 echo "using the following repos:"
